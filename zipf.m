@@ -1,0 +1,36 @@
+function x = zipf(N, w)
+% Generate random numbers based on Zipf distribution
+% Author: Tuyen Tran (tuyen.tran@rutgers.edu). Oct 2015
+%
+% Reference: https://en.wikipedia.org/wiki/Zipf's_law
+%
+% N         Number of Elements
+% expn      Exponent
+% M         Number of sample to be generated
+%
+% Example: zipf_rand(3,1,4)
+% ans = 3 2 1 1
+
+% if nargin == 2
+%     M = 1;
+% end
+% 
+% ranks = 1:1:N;
+% 
+% pmf = (ranks.^(-expn))/sum(ranks.^(-expn));
+% 
+% samples = rand(1,M);
+% 
+% p = cumsum(pmf(:));
+% 
+% [~,x] = histc(samples,[0;p/p(end)]);
+% 
+% x = x /sum(x);
+
+for i = 1 : N
+   x(i) =  1 / (i^w);
+end
+
+x = x/sum(x);
+
+end
