@@ -3,7 +3,7 @@ clear
 R = 1;                      %transmission rate in bits/slot (same for every SBS)
 B = 1;                      %size of videos
 K = 10000;                  %number of videos considered
-Vunsrt = zipf(K, 0.85);    %probabilities of videos
+Vunsrt = zipf(K, 0.85);     %probabilities of videos
 V = sort(Vunsrt, 'descend')';
 
 N = 100;                    %number of picocells or SBSs
@@ -126,7 +126,7 @@ for i = 0:step:maxCacheSize
     
 Dk = ones(K,1) * DLstar / N;
 CB = i;
-stages = gamma(3, 1:end);
+stages = gamma(3, 1:end);       %array with data sizes that need to be stored extra in order to reach the next best delay
 
 counter = 1;
 while CB > 0
