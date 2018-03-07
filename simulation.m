@@ -3,7 +3,7 @@ clear
 R = 1;                      %transmission rate in bits/slot (same for every SBS)
 B = 1;                      %size of videos
 K = 10000;                  %number of videos considered
-w = 0.95;                   %skewness coefficient
+w = 0.75;                   %skewness coefficient
 Vunsrt = zipf(K, w);     %probabilities of videos
 V = sort(Vunsrt, 'descend')';
 
@@ -158,7 +158,7 @@ ylabel('Average Buffering Delay (in time slots)')
 title('Delay versus Cache Size for w=0.85, T=10')
 xlim([0 0.5])
 legend('Delay Aware Caching','Caching Most Popular files', 'Caching files equally')
-print(strcat('cs', num2str(w)),'-depsc')
+print(strcat('cs', extractAfter(num2str(w), '0.')),'-depsc')
 
 toc
 
