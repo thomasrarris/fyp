@@ -3,88 +3,80 @@ clear
 R = 1;                      %transmission rate in bits/slot (same for every SBS)
 B = 1;                      %size of videos
 K = 10000;                  %number of videos considered
-Vunsrt = zipf(K, 0.85);     %probabilities of videos
+Vunsrt = zipf(K, 0.95);     %probabilities of videos
 V = sort(Vunsrt, 'descend')';
 
 N = 100;                    %number of picocells or SBSs
-T = 10;                     %threshold delay to ensure fairness
+T_max = 10;                 %threshold delay to ensure fairness
 
 bit = B/N;                  %size of each bit
 
 %% Graph Parameters
 
-step = 250;
+step = 500;
 maxCacheSize = 5000;
 
 %% Calculate gamma values
 
-Dk = 1:N;
+DLstar = 1/T_max;
 
-DLstar = min(Dk(ceil(N./Dk) <= T));
-
-Rk = zeros(1, N);
-
-gamma = zeros(1,2);
-gammaCounter = 1;
-
-tempx = DLstar;
-tempy = ceil(N/DLstar);
-
-for Dk = DLstar : N   
-    Rk(Dk) = ceil(N/Dk);
-    
-    if tempy ~= Rk(Dk)
-        gamma(1, gammaCounter) = (Rk(Dk) - tempy)/(Dk - tempx);
-        gamma(2, gammaCounter) = tempx;
-        gamma(3, gammaCounter) = Dk/N - DLstar/N;
-        
-        tempy = Rk(Dk);
-        tempx = Dk;
-        gammaCounter = gammaCounter + 1;
+DL(1) = 1;      %delay levels
+previous = T_max;
+counter = 2;
+for i = 1:T_max    
+    if previous > ceil(T_max/i)
+        previous = ceil(T_max/i);
+        DL(counter) = i;
+        counter = counter + 1;
     end
 end
 
-gamma(1, gammaCounter) = 0; %(Rk(Dk) - tempy)/(Dk - tempx);
-gamma(2, gammaCounter) = tempx;
-gamma(3,2:end) = gamma(3,2:end) - gamma(3,1:end-1);
+counter = 1;
+for Dk = DL  
+    Rk(counter) = ceil(T_max/Dk);
+    counter = counter + 1;
+end
+
+limit = size(DL,2);
+for i = 1: limit - 1
+    gamma(1, i) = (Rk(i + 1) - Rk(i))/(DL(i+1) - DL(i));
+    gamma(2, i) = DL(i);
+end
+
+gamma(1, limit) = 0; %(Rk(Dk) - tempy)/(Dk - tempx);
+gamma(2, limit) = DL(limit);
+gamma(2, :) = gamma(2, :)/T_max;
 
 GAMMA = V * gamma(1,:);
 
+clear previous limit 
 %% implementation of the algorithm derived in the paper
 
 tic
 for i = 0:step:maxCacheSize
 
-C = i;
-    
-Dk = ones(K,1) * DLstar;
-gammak = abs(GAMMA(:,1));
-lk = ones(K,1);
-CB = C;
-DL = gamma(2,:);
+    Dk = ones(K,1) * DLstar;
+    gammak = abs(GAMMA(:,1));
+    lk = ones(K,1);
+    CB = i;
+    dl = gamma(2,:);
 
-while CB > 0
-    [MAX, k] = max(gammak);
-    
-    if lk(k) + 1 <= size(DL,2) 
-        if CB >= DL(lk(k) + 1) - DL(lk(k))
-            CB = CB - (DL(lk(k) + 1) - DL(lk(k))) * bit;
-            Dk(k) = DL(lk(k) + 1);
+    while CB > 0
+        [MAX, k] = max(gammak);
+
+        if CB >= dl(lk(k) + 1) - dl(lk(k))
+            CB = CB - (dl(lk(k) + 1) - dl(lk(k)));
+            Dk(k) = dl(lk(k) + 1);
             lk(k) = lk(k) + 1;
             gammak(k) = abs(GAMMA(k,lk(k)));
         else 
             Dk(k) = Dk(k) + CB;
             CB = 0;
         end
-    else 
-        Dk(k) = Dk(k) + CB;
-        CB = 0;
     end
-    
-end
 
-avrage_delay(i/step + 1) = V' * ceil(N./Dk);
-cache_size(i/step + 1) =  (K * DLstar * bit + i) / K;
+    avrage_delay(i/step + 1) = V' * ceil(1./Dk);
+    cache_size(i/step + 1) =  (K * DLstar * bit + i) / K;
 end
 
 plot(cache_size, avrage_delay)
@@ -95,15 +87,15 @@ for i = 0:step:maxCacheSize
 
 C = i;
     
-Dk = ones(K,1) * DLstar / N;
+Dk = ones(K,1) * 1 / T_max;
 CB = C;
 
 counter = 1;
 while CB > 0
     
-    if CB >= (N-DLstar) / N
-        Dk(counter) = Dk(counter) + (N-DLstar) / N;
-        CB = CB - (N-DLstar) / N;
+    if CB >= 1 - 1/T_max
+        Dk(counter) = 1;
+        CB = CB - (1 - 1/T_max);
         counter = counter + 1;
     else 
         Dk(counter) = Dk(counter) + CB;
@@ -123,29 +115,36 @@ hold off
 %% equal size caching
 
 for i = 0:step:maxCacheSize
-    
-Dk = ones(K,1) * DLstar / N;
-CB = i;
-stages = gamma(3, 1:end);       %array with data sizes that need to be stored extra in order to reach the next best delay
+  
+    l = 1;
+    Dk = ones(K,1) * (1 / T_max) * DL(l);
+    CB = i;
 
-counter = 1;
-while CB > 0
-    
-    if CB >= K * stages(counter)
-        Dk(:,1) = Dk(:,1) + stages(counter);
-        CB = CB - K * stages(counter);
-    else 
-        for j = 1 : CB/stages(counter)
-            Dk(j) = Dk(j) + stages(counter);
+
+    while CB > 0
+
+        if CB >= K * (DL(l+1)-DL(l)) * 1/T_max
+            Dk(:,1) = Dk(:,1) + (DL(l+1)-DL(l)) * 1/T_max;
+            CB = CB - K * (DL(l+1)-DL(l)) * 1/T_max;
+            l = l + 1;
+        else
+            counter = 1;
+            while CB > 0
+                if CB >= (DL(l+1)-DL(l)) * 1/T_max
+                    Dk(counter,1) = Dk(counter,1) + (DL(l+1)-DL(l)) * 1/T_max;
+                    counter = counter + 1;
+                    CB = CB - (DL(l+1)-DL(l)) * 1/T_max;
+                    
+                else
+                    Dk(counter,1) = Dk(counter,1) + CB;
+                    CB = 0;
+                end
+            end
         end
-        CB = 0;
     end
-    
-    counter = counter + 1;
-end
 
-avrage_delay(i/step + 1) = V' * ceil(1./Dk);
-cache_size(i/step + 1) =  (K * DLstar * bit + i) / K;
+    avrage_delay(i/step + 1) = V' * ceil(1./Dk);
+    cache_size(i/step + 1) =  (K * DLstar * bit + i) / K;
 end
 
 hold on 
@@ -158,3 +157,4 @@ title('Delay versus Cache Size for w=0.85, T=10')
 legend('Delay Aware Caching','Caching Most Popular files', 'Caching files equally')
 toc
 
+clear i MAX step Vunsrt
