@@ -3,7 +3,8 @@ clear
 R = 1;                      %transmission rate in bits/slot (same for every SBS)
 B = 1;                      %size of videos
 K = 10000;                  %number of videos considered
-Vunsrt = zipf(K, 0.95);     %probabilities of videos
+w = 0.95;                   %skewness coefficient
+Vunsrt = zipf(K, w);     %probabilities of videos
 V = sort(Vunsrt, 'descend')';
 
 N = 100;                    %number of picocells or SBSs
@@ -16,6 +17,7 @@ bit = B/N;                  %size of each bit
 step = 500;
 maxCacheSize = 5000;
 
+figure('position', [500 500 400 400])
 %% Calculate gamma values
 
 DLstar = 1/T_max;
@@ -154,7 +156,10 @@ hold off
 xlabel('Cache Size (in terms of video library size)')
 ylabel('Average Buffering Delay (in time slots)')
 title('Delay versus Cache Size for w=0.85, T=10')
+xlim([0 0.5])
 legend('Delay Aware Caching','Caching Most Popular files', 'Caching files equally')
+print(strcat('cs', num2str(w)),'-depsc')
+
 toc
 
 clear i MAX step Vunsrt
