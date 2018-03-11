@@ -5,7 +5,7 @@ B = 1;                      %size of videos
 
 C = 800;                    %cache size
 K = 10000;                  %number of videos considered
-w = 0.85;
+w = 0.75;
 Vunsrt = zipf(K, w);     %probabilities of videos
 p = sort(Vunsrt, 'descend')';
 
@@ -176,6 +176,6 @@ hold off
 xlabel('T_{avg} constraint')
 ylabel('Cost')
 xlim([T_avg,T_max]);
-title(strcat('Cost versus max avg delay for  a=0, w=', num2str(w),', T=10'))
+% title(strcat('Cost versus max avg delay for  a=0, w=', num2str(w),', T=10'))
 legend('Delay Aware Caching','Caching Most Popular files', 'Caching files equally')
 print(strcat('mobileUser', extractAfter(num2str(w), '0.')),'-depsc')
