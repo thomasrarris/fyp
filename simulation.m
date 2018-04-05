@@ -1,10 +1,9 @@
-clear 
+clearvars -except w
 
 R = 1;                      %transmission rate in bits/slot (same for every SBS)
 B = 1;                      %size of videos
 K = 10000;                  %number of videos considered
-w = 0.95;                   %skewness coefficient
-Vunsrt = zipf(K, w);     %probabilities of videos
+Vunsrt = zipf(K, w);        %probabilities of videos
 V = sort(Vunsrt, 'descend')';
 
 N = 100;                    %number of picocells or SBSs
@@ -15,7 +14,7 @@ bit = B/N;                  %size of each bit
 %% Graph Parameters
 
 step = 50;
-maxCacheSize = 5000;
+maxCacheSize = 6000;
 
 figure('position', [500 500 300 300])
 %% Calculate gamma values
@@ -78,10 +77,10 @@ for i = 0:step:maxCacheSize
     end
 
     avrage_delay(i/step + 1) = V' * ceil(1./Dk);
-    cache_size(i/step + 1) =  (K * DLstar * bit + i) / K;
+    cache_size(i/step + 1) =  (K * DLstar + i) / K;
 end
 
-plot(cache_size, avrage_delay)
+plot(cache_size, avrage_delay, 'LineWidth', 2)
 
 %% most popular videos benchmark
 
@@ -107,11 +106,11 @@ while CB > 0
 end
 
 avrage_delay(i/step + 1) = V' * ceil(1./Dk);
-cache_size(i/step + 1) =  (K * DLstar * bit + i) / K;
+cache_size(i/step + 1) =  (K * DLstar + i) / K;
 end
 
 hold on 
-plot(cache_size, avrage_delay)
+plot(cache_size, avrage_delay, 'LineWidth', 2)
 hold off
 
 %% equal size caching
@@ -146,19 +145,21 @@ for i = 0:step:maxCacheSize
     end
 
     avrage_delay(i/step + 1) = V' * ceil(1./Dk);
-    cache_size(i/step + 1) =  (K * DLstar * bit + i) / K;
+    cache_size(i/step + 1) =  (K * DLstar + i) / K;
 end
 
 hold on 
-plot(cache_size, avrage_delay)
+plot(cache_size, avrage_delay, 'LineWidth', 2)
 hold off
 
-xlabel('Cache Size (in terms of video library size)')
+xlabel('Cache size normalised over video library size')
 ylabel('Average Buffering Delay (in time slots)')
 % title(strcat('Delay versus Cache Size for w=', num2str(w),', T=10'))
-xlim([0 0.5])
+xlim([0.1 0.7])
+ylim([1 10])
 legend('Delay Aware Caching','Caching Most Popular files', 'Caching files equally')
-print(strcat('cs', extractAfter(num2str(w), '0.')),'-depsc')
+set(gca,'fontsize',12)
+print(strcat('cs_', extractAfter(num2str(w), '0.')),'-depsc')
 
 toc
 

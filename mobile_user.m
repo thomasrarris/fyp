@@ -1,12 +1,11 @@
-clear 
+clearvars -except w
 
 R = 1;                      %transmission rate in bits/slot (same for every SBS)
 B = 1;                      %size of videos
 
 C = 800;                    %cache size
 K = 10000;                  %number of videos considered
-w = 0.75;
-Vunsrt = zipf(K, w);     %probabilities of videos
+Vunsrt = zipf(K, w);        %probabilities of videos
 p = sort(Vunsrt, 'descend')';
 
 N = 100;                    %number of picocells or SBSs
@@ -55,7 +54,7 @@ while getAvgDelay(K, chi, p) > T_avg
 end
 
 results = results(results(:,1)>0,:);
-plot(results(:,1),results(:,2));
+plot(results(:,1),results(:,2), 'LineWidth', 2);
 
 %% most popular files benchmark
 results = zeros(K,2);
@@ -103,7 +102,7 @@ end
 
 results = results(results(:,1)>0,:);
 hold on
-plot(results(:,1),results(:,2));
+plot(results(:,1),results(:,2), 'LineWidth', 2);
 hold off
 
 %% equal file caching
@@ -170,12 +169,14 @@ end
 
 results = results(results(:,1)>0,:);
 hold on
-plot(results(:,1),results(:,2));
+plot(results(:,1),results(:,2), 'LineWidth', 2);
 hold off
 %% graph
-xlabel('T_{avg} constraint')
-ylabel('Cost')
-xlim([T_avg,T_max]);
+xlabel('D_{avgMax} (in time slots)')
+ylabel('Average cost normalised over file size')
+xlim([T_avg,8]);
+ylim([0,0.45]);
+set(gca,'fontsize',12)
 % title(strcat('Cost versus max avg delay for  a=0, w=', num2str(w),', T=10'))
 legend('Delay Aware Caching','Caching Most Popular files', 'Caching files equally')
 print(strcat('mobileUser', extractAfter(num2str(w), '0.')),'-depsc')
